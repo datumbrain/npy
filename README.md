@@ -227,40 +227,71 @@ For example, a 2x3 array in C order would have elements in this sequence:
 
 When specifying multi-dimensional data, ensure your Go slice follows this ordering based on your `Fortran` flag.
 
-## API Reference
+## CSV Export
 
-### Types
+The library also provides functionality to export NumPy arrays to CSV format:
 
-- `DType`: String type representing NumPy data types
+### Exporting a Single Array to CSV
 
-  - Constants: `Bool`, `Int8`, `Int16`, `Int32`, `Int64`, `Uint8`, `Uint16`, `Uint32`, `Uint64`, `Float32`, `Float64`
+```go
+package main
 
-- `Array[T]`: Generic struct representing a NumPy array
+import (
+    "fmt"
+    "log"
 
-  - `Data []T`: The array data
-  - `Shape []int`: The dimensions of the array
-  - `DType DType`: The data type
-  - `Fortran bool`: If true, the array is in column-major (Fortran) order
+    "github.com/datumbrain/npy"
+)
 
-- `NPZFile`: Struct representing a NumPy `.npz` file containing multiple arrays
+func main() {
+    // Read a .npy file with float64 data
+    arr, err := npy.ReadFile[float64]("matrix.npy")
+    if err != nil {
+        log.Fatalf("Failed to read array: %v", err)
+    }
 
-### Functions
+    // Export to CSV
+    err = npy.ToCSV(arr, "matrix.csv")
+    if err != nil {
+        log.Fatalf("Failed to export to CSV: %v", err)
+    }
 
-#### For `.npy` Files
+    fmt.Println("Successfully exported to CSV")
+}
+```
 
-- `ReadFile[T any](path string) (*Array[T], error)`: Read a NumPy array from a `.npy` file
-- `WriteFile[T any](path string, arr *Array[T]) error`: Write a NumPy array to a `.npy` file
-- `Read[T any](r io.Reader) (*Array[T], error)`: Read a NumPy array from an `io.Reader`
-- `Write[T any](w io.Writer, arr *Array[T]) error`: Write a NumPy array to an `io.Writer`
+### Exporting All Arrays from an NPZ File
 
-#### For `.npz` Files
+```go
+package main
 
-- `NewNPZFile() *NPZFile`: Create a new empty NPZ file container
-- `Add[T any](npz *NPZFile, name string, arr *Array[T])`: Add an array to an NPZ file
-- `Get[T any](npz *NPZFile, name string) (*Array[T], bool)`: Get an array from an NPZ file
-- `Keys(npz *NPZFile) []string`: Get all array names in an NPZ file
-- `ReadNPZFile(path string) (*NPZFile, error)`: Read multiple NumPy arrays from a `.npz` file
-- `WriteNPZFile(path string, npz *NPZFile) error`: Write multiple NumPy arrays to a `.npz` file
+import (
+    "fmt"
+    "log"
+
+    "github.com/datumbrain/npy"
+)
+
+func main() {
+    // Export all arrays in an NPZ file to individual CSV files
+    err := npy.NPZToCSVDir("data.npz", "./csv_output")
+    if err != nil {
+        log.Fatalf("Failed to export NPZ to CSV: %v", err)
+    }
+
+    fmt.Println("Successfully exported all arrays to CSV files")
+    // Creates files like:
+    // - ./csv_output/array1.csv
+    // - ./csv_output/array2.csv
+}
+```
+
+The CSV export supports:
+
+- 1D arrays (exported as a single row)
+- 2D arrays (exported as rows and columns)
+- Both row-major (C order) and column-major (Fortran order) arrays
+- All NumPy data types supported by the library
 
 ## License
 
